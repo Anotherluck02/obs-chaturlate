@@ -27,13 +27,20 @@ echo "✅ Found: $COMPILER_CONFIG"
 echo "📝 Creating backup..."
 cp "$COMPILER_CONFIG" "$COMPILER_CONFIG.original"
 
-echo "🔧 Applying simple patch (downgrade FATAL_ERROR to WARNING)..."
+echo "🔧 Applying patch (comment out SDK check entirely)..."
 
-# Simple approach: just make it a warning instead of an error
-# This allows the build to continue even with newer SDK
+# Simplest approach: comment out the entire SDK version check
+# This prevents both the regex error AND the version error
 sed -i.backup '
-  s/FATAL_ERROR "Your macOS SDK version/WARNING "Your macOS SDK version/g
+  # Comment out lines related to SDK version checking
+  /# Ensure recent enough Xcode/,/unset(_obs_macos_minimum_xcode)/s/^/# PATCHED: /
 ' "$COMPILER_CONFIG"
+
+# Alternative: if the above doesn't work, just change FATAL_ERROR to WARNING
+if grep -q "FATAL_ERROR.*macOS SDK" "$COMPILER_CONFIG"; then
+    echo "Primary patch didn't work, trying fallback..."
+    sed -i.backup2 's/FATAL_ERROR "Your macOS SDK version/WARNING "Your macOS SDK version/g' "$COMPILER_CONFIG"
+fi
 
 if [ $? -eq 0 ]; then
     echo "✅ Patch applied successfully!"
