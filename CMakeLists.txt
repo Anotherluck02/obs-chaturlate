@@ -95,6 +95,7 @@ target_sources(
           src/whisper-utils/whisper-utils.cpp
           src/whisper-utils/silero-vad-onnx.cpp
           src/whisper-utils/token-buffer-thread.cpp
+          src/transcription-filter-callbacks.cpp
           # Translation
           src/translation/translation.cpp
           src/translation/language_codes.cpp
