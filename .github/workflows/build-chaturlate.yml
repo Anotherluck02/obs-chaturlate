@@ -49,7 +49,22 @@ jobs:
           echo "SDK Path:"
           xcrun --show-sdk-path
       
-      - name: Build plugin
+      - name: Start build to download dependencies
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          # Start the build which will download OBS sources
+          # This will likely fail at SDK check, but that's expected
+          ./.github/scripts/build-macos -c Release
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+      
+      - name: Patch OBS SDK version check
+        run: |
+          chmod +x .github/scripts/patch-obs-sdk-check.sh
+          ./.github/scripts/patch-obs-sdk-check.sh
+      
+      - name: Build plugin (after patch)
         run: |
           ./.github/scripts/build-macos -c Release
         env:
