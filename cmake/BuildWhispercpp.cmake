@@ -148,12 +148,13 @@ if(APPLE)
   add_compile_definitions(WHISPER_DYNAMIC_BACKENDS)
 
   # check the "MACOS_ARCH" env var to figure out if this is x86 or arm64
-  # Default to arm64 if not set
+  # Default to system detection if not set
   set(MACOS_ARCH "$ENV{MACOS_ARCH}")
-  if(NOT MACOS_ARCH)
+  if(NOT MACOS_ARCH OR MACOS_ARCH STREQUAL "")
     set(MACOS_ARCH "${CMAKE_OSX_ARCHITECTURES}")
   endif()
-  if(NOT MACOS_ARCH)
+  # Skip if CMAKE_OSX_ARCHITECTURES contains placeholder values
+  if(MACOS_ARCH MATCHES "\\$\\(.*\\)" OR NOT MACOS_ARCH)
     # Detect from system
     execute_process(COMMAND uname -m OUTPUT_VARIABLE MACOS_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
