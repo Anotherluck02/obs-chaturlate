@@ -30,3 +30,4 @@ void media_stopped_callback(void *data_, calldata_t *cd);
 void enable_callback(void *data_, calldata_t *cd);
 
 #endif /* TRANSCRIPTION_FILTER_CALLBACKS_H */
+

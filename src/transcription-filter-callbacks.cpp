@@ -834,3 +834,4 @@ void enable_callback(void *data_, calldata_t *cd)
 		shutdown_whisper_thread(gf_);
 	}
 }
+

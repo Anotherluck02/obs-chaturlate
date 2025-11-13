@@ -283,3 +283,4 @@ void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm
 			  size_t frames, int vad_state, const DetectionResultWithText &result);
 
 #endif /* TRANSCRIPTION_FILTER_DATA_H */
+
