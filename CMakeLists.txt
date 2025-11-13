@@ -6,6 +6,7 @@ project(${_name} VERSION ${_version})
 
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
 option(ENABLE_QT "Use Qt functionality" OFF)
+option(USE_SYSTEM_ONNXRUNTIME "Use system ONNX Runtime" OFF)
 
 include(compilerconfig)
 include(defaults)
@@ -47,7 +48,22 @@ else()
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libcurl)
 endif()
 
-# build sherpa-onnx
+# build Whisper.cpp for STT
+include(cmake/BuildWhispercpp.cmake)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Whispercpp)
+
+# build CTranslate2 and Sentencepiece for translation
+include(cmake/BuildCTranslate2.cmake)
+include(cmake/BuildSentencepiece.cmake)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ct2 sentencepiece)
+
+# build ONNX Runtime for VAD
+if(NOT USE_SYSTEM_ONNXRUNTIME)
+  include(cmake/FetchOnnxruntime.cmake)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Onnxruntime)
+endif()
+
+# build sherpa-onnx for TTS
 include(cmake/BuildSherpaOnnx.cmake)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE sherpa-onnx)
 
@@ -67,6 +83,22 @@ target_sources(
           src/audio-thread.cpp
           src/squawk-source.c
           src/squawk-source.cpp
-          src/tts-utils.cpp)
+          src/tts-utils.cpp
+          # Chaturlate Filter (STT → Translation → TTS)
+          src/chaturlate-filter.c
+          src/chaturlate-filter.cpp
+          # Whisper STT
+          src/whisper-utils/whisper-processing.cpp
+          src/whisper-utils/vad-processing.cpp
+          src/whisper-utils/whisper-model-utils.cpp
+          src/whisper-utils/whisper-params.cpp
+          src/whisper-utils/whisper-utils.cpp
+          src/whisper-utils/silero-vad-onnx.cpp
+          src/whisper-utils/token-buffer-thread.cpp
+          # Translation
+          src/translation/translation.cpp
+          src/translation/language_codes.cpp
+          src/translation/translation-language-utils.cpp
+          src/translation/translation-utils.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

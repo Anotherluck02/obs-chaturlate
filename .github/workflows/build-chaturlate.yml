@@ -1,0 +1,148 @@
+name: Build Chaturlate Plugin
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: Build on macOS
+    runs-on: macos-13  # macOS 13 with Xcode 15 (compatible SDK)
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: macos-build
+      
+      - name: Install dependencies
+        run: |
+          brew install cmake ninja
+      
+      - name: Fix ccache configuration for newer ccache versions
+        run: |
+          # Comment out run_second_cpp which is not supported in ccache 4.12+
+          if [ -f .github/scripts/utils.zsh/setup_ccache ]; then
+            sed -i '' 's/ccache --set-config=run_second_cpp=true/# ccache --set-config=run_second_cpp=true  # Disabled for ccache 4.12+/' .github/scripts/utils.zsh/setup_ccache
+          fi
+      
+      - name: Display system info
+        run: |
+          echo "macOS version:"
+          sw_vers
+          echo ""
+          echo "Xcode version:"
+          xcodebuild -version
+          echo ""
+          echo "CMake version:"
+          cmake --version
+          echo ""
+          echo "SDK Path:"
+          xcrun --show-sdk-path
+      
+      - name: Build plugin
+        run: |
+          ./.github/scripts/build-macos -c Release
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+      
+      - name: Check build output
+        run: |
+          echo "Build directory contents:"
+          ls -lah build_macos/ || echo "build_macos not found"
+          if [ -d "build_macos/obs-squawk.plugin" ]; then
+            echo "✅ Plugin built successfully!"
+            echo "Plugin size:"
+            du -sh build_macos/obs-squawk.plugin
+            echo "Plugin contents:"
+            ls -lR build_macos/obs-squawk.plugin/Contents/
+          else
+            echo "❌ Plugin not found!"
+            exit 1
+          fi
+      
+      - name: Create plugin archive
+        run: |
+          cd build_macos
+          tar -czf obs-squawk-chaturlate-plugin.tar.gz obs-squawk.plugin
+          echo "Archive created:"
+          ls -lh obs-squawk-chaturlate-plugin.tar.gz
+      
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-squawk-chaturlate-macos-arm64
+          path: build_macos/obs-squawk-chaturlate-plugin.tar.gz
+          retention-days: 30
+      
+      - name: Upload raw plugin bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-squawk-plugin-bundle
+          path: build_macos/obs-squawk.plugin/
+          retention-days: 30
+  
+  build-info:
+    name: Build Information
+    runs-on: ubuntu-latest
+    needs: build-macos
+    
+    steps:
+      - name: Display installation instructions
+        run: |
+          cat << 'EOF'
+          ╔════════════════════════════════════════════════════════════════╗
+          ║          🎉 Chaturlate Plugin Build Successful! 🎉            ║
+          ╚════════════════════════════════════════════════════════════════╝
+          
+          📦 INSTALLATION INSTRUCTIONS:
+          
+          1. Download the artifact from the "Actions" tab above
+          2. Extract the tar.gz file:
+             tar -xzf obs-squawk-chaturlate-plugin.tar.gz
+          
+          3. Install the plugin on your Mac:
+             mkdir -p ~/Library/Application\ Support/obs-studio/plugins
+             cp -r obs-squawk.plugin ~/Library/Application\ Support/obs-studio/plugins/
+          
+          4. Code sign the plugin (required on macOS):
+             codesign --force --deep --sign - ~/Library/Application\ Support/obs-studio/plugins/obs-squawk.plugin
+          
+          5. Restart OBS Studio
+          
+          🎯 USAGE:
+          
+          1. Add your microphone as an audio source in OBS
+          2. Right-click the mic → Filters → Add Filter
+          3. Select "Chaturlate (Hold L: STT → Translation → TTS)"
+          4. Configure the filter:
+             - Choose Whisper model (for Speech-to-Text)
+             - Enable translation if needed
+             - Choose TTS model and voice
+          5. Go to OBS Settings → Hotkeys
+          6. Find "Chaturlate - Hold to Translate (L)"
+          7. Bind it to the "L" key
+          8. Test:
+             - Hold L and speak
+             - Release L
+             - Hear translated speech!
+          
+          ✨ FEATURES:
+          - Hold L key to activate
+          - Mic auto-mutes when L is pressed
+          - Speech-to-Text via Whisper
+          - Translation via CTranslate2
+          - Text-to-Speech via Sherpa-ONNX
+          
+          📝 For issues, check the logs in OBS or open an issue on GitHub.
+          EOF
+
