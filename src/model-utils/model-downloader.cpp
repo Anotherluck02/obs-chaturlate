@@ -270,3 +270,16 @@ void delete_cached_models()
 		std::filesystem::remove_all(entry.path());
 	}
 }
+
+void download_coreml_encoder_model_if_available(
+	const ModelInfo &model_info,
+	coreml_model_download_finished_callback_t download_finished_callback)
+{
+	// Stub implementation - CoreML support not yet implemented in obs-squawk
+	// This function is called but does nothing for now
+	obs_log(LOG_DEBUG, "CoreML encoder model download requested for %s (not implemented)",
+		model_info.friendly_name.c_str());
+	if (download_finished_callback) {
+		download_finished_callback();
+	}
+}

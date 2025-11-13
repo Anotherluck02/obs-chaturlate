@@ -8,6 +8,7 @@
 #include "whisper-processing.h"
 #include "plugin-support.h"
 #include "model-utils/model-downloader.h"
+#include "model-utils/model-downloader-types.h"
 
 void update_whisper_model(struct transcription_filter_data *gf, bool force_whisper_restart)
 {
@@ -160,3 +161,4 @@ void update_whisper_model(struct transcription_filter_data *gf, bool force_whisp
 		}
 	}
 }
+

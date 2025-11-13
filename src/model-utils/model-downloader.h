@@ -10,6 +10,10 @@ std::string find_model_bin_file(const ModelInfo &model_info);
 
 void unpack_model(const ModelInfo &model_info, const std::string &model_local_folder_path);
 
+void download_coreml_encoder_model_if_available(
+	const ModelInfo &model_info,
+	coreml_model_download_finished_callback_t download_finished_callback);
+
 // Start the model downloader UI dialog with a callback for when the download is finished
 void download_model_with_ui_dialog(const ModelInfo &model_info,
 				   download_finished_callback_t download_finished_callback);

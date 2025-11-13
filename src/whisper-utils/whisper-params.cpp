@@ -188,3 +188,4 @@ void add_whisper_params_group_properties(obs_properties_t *ppts)
 	obs_properties_add_float(g, "beam_search.patience", MT_("beam_search.patience"), 0, 1,
 				 0.05);
 }
+
