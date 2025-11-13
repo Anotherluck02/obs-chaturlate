@@ -189,3 +189,4 @@ void add_whisper_params_group_properties(obs_properties_t *ppts)
 				 0.05);
 }
 
+

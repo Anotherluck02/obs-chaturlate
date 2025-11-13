@@ -443,3 +443,4 @@ void whisper_loop(void *data)
 	obs_log(gf->log_level, "Exiting whisper thread");
 }
 
+

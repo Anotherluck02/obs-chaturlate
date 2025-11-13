@@ -162,3 +162,4 @@ void update_whisper_model(struct transcription_filter_data *gf, bool force_whisp
 	}
 }
 
+
