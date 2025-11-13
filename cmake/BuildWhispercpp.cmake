@@ -171,16 +171,16 @@ if(APPLE)
       GGMLCPU-ICELAKE
       GGMLCPU-ALDERLAKE
       GGMLCPU-SAPPHIRERAPIDS)
-  elseif($ENV{MACOS_ARCH} STREQUAL "arm64")
+  elseif(MACOS_ARCH STREQUAL "arm64")
     set(WHISPER_CPP_HASH "ff2764b113e0f1fbafe0d8f86a339cd541d86a06d40a10eeac352050cc3be920")
     list(APPEND WHISPER_RUNTIME_MODULES GGMLCPU-APPLE_M1 GGMLCPU-APPLE_M2_M3 GGMLCPU-APPLE_M4)
   else()
     message(
       FATAL_ERROR
-        "The MACOS_ARCH environment variable is not set to a valid value. Please set it to either `x86_64` or `arm64`")
+        "Unable to detect macOS architecture. MACOS_ARCH='${MACOS_ARCH}' is not valid. Expected 'x86_64' or 'arm64'")
   endif()
   set(WHISPER_CPP_URL
-      "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-macos-$ENV{MACOS_ARCH}-${PREBUILT_WHISPERCPP_VERSION}.tar.gz")
+      "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-macos-${MACOS_ARCH}-${PREBUILT_WHISPERCPP_VERSION}.tar.gz")
 
   set(WHISPER_LIBRARIES Whisper WhisperCoreML GGML GGMLBase)
   list(APPEND WHISPER_RUNTIME_MODULES GGMLMetal GGMLBlas)
