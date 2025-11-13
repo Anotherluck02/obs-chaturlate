@@ -7,6 +7,7 @@ project(${_name} VERSION ${_version})
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
 option(ENABLE_QT "Use Qt functionality" OFF)
 option(USE_SYSTEM_ONNXRUNTIME "Use system ONNX Runtime" OFF)
+option(USE_SYSTEM_ICU "Use system ICU" OFF)
 
 include(compilerconfig)
 include(defaults)
@@ -74,6 +75,38 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE sherpa-onnx)
 # build libarchive
 include(cmake/BuildLibarchive.cmake)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libarchive)
+
+# build ICU for Unicode support
+if(USE_SYSTEM_ICU)
+  find_package(
+    ICU 70.1
+    COMPONENTS data uc i18n
+    REQUIRED)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE "${ICU_LIBRARIES}")
+  target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC "${ICU_INCLUDE_DIRS}")
+else()
+  set(ICU_LIBRARIES "")
+  find_library(ICU_DATA_LIB icudata OPTIONAL)
+  find_library(ICU_UC_LIB icuuc OPTIONAL)
+  find_library(ICU_I18N_LIB icui18n OPTIONAL)
+
+  if(ICU_DATA_LIB
+     AND ICU_UC_LIB
+     AND ICU_I18N_LIB)
+    list(APPEND ICU_LIBRARIES ${ICU_DATA_LIB} ${ICU_UC_LIB} ${ICU_I18N_LIB})
+    message(STATUS "Cached ICU libs: " ${ICU_LIBRARIES})
+    set(ICU_INCLUDE_DIR "${CMAKE_BINARY_DIR}/ICU_build-prefix/include")
+    message(STATUS "Cached ICU include dir: " ${ICU_INCLUDE_DIR})
+
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE "${ICU_LIBRARIES}")
+    target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
+  else()
+    include(cmake/BuildICU.cmake)
+    # Add ICU to the target
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
+    target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
+  endif()
+endif()
 
 target_sources(
   ${CMAKE_PROJECT_NAME}
