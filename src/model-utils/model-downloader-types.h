@@ -8,6 +8,7 @@
 
 typedef std::function<void(int download_status, const std::string &path)>
 	download_finished_callback_t;
+typedef std::function<void()> coreml_model_download_finished_callback_t;
 
 struct ModelFileDownloadInfo {
 	std::string url;
@@ -24,5 +25,6 @@ struct ModelInfo {
 };
 
 extern std::vector<ModelInfo> model_infos;
+extern const std::map<std::string, ModelInfo> &models_info();
 
 #endif /* MODEL_DOWNLOADER_TYPES_H */

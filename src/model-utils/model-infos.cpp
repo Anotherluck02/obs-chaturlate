@@ -1,4 +1,6 @@
 #include "model-downloader-types.h"
+#include <map>
+#include <obs-module.h>
 
 std::vector<ModelInfo> model_infos = {
 	{"Afrikaans Mimic3 google-nwu_low (9 speakers)",
@@ -985,5 +987,17 @@ std::vector<ModelInfo> model_infos = {
 	 "vits-piper-cy_GB-gwryw_gogleddol-medium",
 	 MODEL_TYPE_TTS,
 	 {{"https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-cy_GB-gwryw_gogleddol-medium.tar.bz2",
-	   ""}}},
+         ""}}},
 };
+
+const std::map<std::string, ModelInfo> &models_info()
+{
+	static std::map<std::string, ModelInfo> models_map;
+	if (models_map.empty()) {
+		for (const auto &model : model_infos) {
+			models_map[model.friendly_name] = model;
+		}
+		obs_log(LOG_INFO, "Loaded %zu models", models_map.size());
+	}
+	return models_map;
+}
