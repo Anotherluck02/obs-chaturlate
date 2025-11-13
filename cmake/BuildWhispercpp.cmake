@@ -148,7 +148,17 @@ if(APPLE)
   add_compile_definitions(WHISPER_DYNAMIC_BACKENDS)
 
   # check the "MACOS_ARCH" env var to figure out if this is x86 or arm64
-  if($ENV{MACOS_ARCH} STREQUAL "x86_64")
+  # Default to arm64 if not set
+  set(MACOS_ARCH "$ENV{MACOS_ARCH}")
+  if(NOT MACOS_ARCH)
+    set(MACOS_ARCH "${CMAKE_OSX_ARCHITECTURES}")
+  endif()
+  if(NOT MACOS_ARCH)
+    # Detect from system
+    execute_process(COMMAND uname -m OUTPUT_VARIABLE MACOS_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif()
+  
+  if(MACOS_ARCH STREQUAL "x86_64")
     set(WHISPER_CPP_HASH "02446b1d508711b26cc778db48d5b8ef2dd7b0c98f5c9dfe39a1ad2ef9e3df07")
     list(
       APPEND
