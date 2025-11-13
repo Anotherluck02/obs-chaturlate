@@ -35,6 +35,10 @@ if(ENABLE_QT)
                AUTORCC ON)
 endif()
 
+# Disable newline-eof warning (files may not have trailing newlines)
+target_compile_options(
+  ${CMAKE_PROJECT_NAME} PRIVATE $<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-Wno-newline-eof>)
+
 # build cURL
 set(USE_SYSTEM_CURL
     OFF
