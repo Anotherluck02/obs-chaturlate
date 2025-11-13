@@ -17,8 +17,8 @@ void start_translation(struct transcription_filter_data *gf)
 			gf->translate = false;
 			return;
 		}
-		std::string model_file_found = gf->translation_model_path_external;
-		build_and_enable_translation(gf, model_file_found);
+		std::string model_file_path = gf->translation_model_path_external;
+		build_and_enable_translation(gf, model_file_path);
 		return;
 	}
 

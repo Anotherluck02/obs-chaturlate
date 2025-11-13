@@ -119,9 +119,9 @@ obs_properties_t *squawk_source_properties(void *data)
 			obs_log(LOG_INFO, "Selected model: %s", model_name);
 			// find model info by name
 			auto model_info = find_model_info_by_name(model_name);
-			std::string model_folder = find_model_folder(model_info);
-			if (!model_folder.empty()) {
-				obs_log(LOG_INFO, "Model folder found: %s", model_folder.c_str());
+			auto model_folder = find_model_folder(model_info);
+			if (model_folder.has_value()) {
+				obs_log(LOG_INFO, "Model folder found: %s", model_folder.value().string().c_str());
 				return true;
 			}
 

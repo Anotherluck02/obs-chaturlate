@@ -1,11 +1,13 @@
 #ifndef MODEL_DOWNLOADER_H
 #define MODEL_DOWNLOADER_H
 
+#include <filesystem>
+#include <optional>
 #include <string>
 
 #include "model-downloader-types.h"
 
-std::string find_model_folder(const ModelInfo &model_info);
+std::optional<std::filesystem::path> find_model_folder(const ModelInfo &model_info);
 std::string find_model_bin_file(const ModelInfo &model_info);
 
 void unpack_model(const ModelInfo &model_info, const std::string &model_local_folder_path);

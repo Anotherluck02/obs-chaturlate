@@ -47,9 +47,9 @@ void init_sherpa_tts_context(sherpa_tts_context &context,
 	memset(&config, 0, sizeof(config));
 
 	auto model_info = find_model_info_by_name(context.model_name);
-	std::string model_folder = find_model_folder(model_info);
+	auto model_folder = find_model_folder(model_info);
 
-	if (model_folder.empty()) {
+	if (!model_folder.has_value()) {
 		obs_log(LOG_ERROR, "Model folder not found for model: %s",
 			context.model_name.c_str());
 		context.tts = nullptr;
@@ -57,13 +57,13 @@ void init_sherpa_tts_context(sherpa_tts_context &context,
 	}
 
 	// find the .onnx file in the model folder from context
-	std::string onnx_model_path = find_file_in_folder_by_extension(model_folder, ".onnx");
+	std::string onnx_model_path = find_file_in_folder_by_extension(model_folder.value().string(), ".onnx");
 	// find the "tokens.txt" file in the model folder from context
-	std::string tokens_path = find_file_in_folder_by_name(model_folder, "tokens.txt");
+	std::string tokens_path = find_file_in_folder_by_name(model_folder.value().string(), "tokens.txt");
 	// find the "lexicon.txt" file in the model folder from context
-	std::string lexicon_path = find_file_in_folder_by_name(model_folder, "lexicon.txt");
+	std::string lexicon_path = find_file_in_folder_by_name(model_folder.value().string(), "lexicon.txt");
 	// if there's no lexicon file, find the "espeak-ng-data" folder in the model folder from context
-	std::string espeak_data_path = find_file_in_folder_by_name(model_folder, "espeak-ng-data");
+	std::string espeak_data_path = find_file_in_folder_by_name(model_folder.value().string(), "espeak-ng-data");
 
 	config.model.vits.model = onnx_model_path.c_str();
 	if (lexicon_path.empty()) {
