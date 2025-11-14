@@ -138,6 +138,16 @@ target_sources(
           src/translation/translation.cpp
           src/translation/language_codes.cpp
           src/translation/translation-language-utils.cpp
-          src/translation/translation-utils.cpp)
+          src/translation/translation-utils.cpp
+          # Cloud Translation
+          src/translation/cloud-translation/translation-cloud.cpp
+          src/translation/cloud-translation/curl-helper.cpp
+          src/translation/cloud-translation/azure.cpp
+          src/translation/cloud-translation/claude.cpp
+          src/translation/cloud-translation/custom-api.cpp
+          src/translation/cloud-translation/deepl.cpp
+          src/translation/cloud-translation/google-cloud.cpp
+          src/translation/cloud-translation/openai.cpp
+          src/translation/cloud-translation/papago.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
