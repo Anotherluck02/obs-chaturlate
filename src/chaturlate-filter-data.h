@@ -36,7 +36,7 @@ struct chaturlate_filter_data {
 	bool vad_enabled;
 	
 	// Translation
-	struct ctranslate2::TranslatorPool *translator_pool;
+	struct translation_context translation_ctx;
 	std::string translation_model_path;
 	std::string target_lang;
 	bool translation_enabled;
@@ -57,7 +57,6 @@ struct chaturlate_filter_data {
 		resampler = nullptr;
 		whisper_context = nullptr;
 		whisper_initialized = false;
-		translator_pool = nullptr;
 		translation_enabled = false;
 		hotkey_pressed = false;
 		mic_muted_by_us = false;

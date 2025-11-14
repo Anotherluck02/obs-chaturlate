@@ -6,6 +6,8 @@
 #include "whisper-utils/whisper-model-utils.h"
 #include "whisper-utils/whisper-processing.h"
 #include "translation/translation-utils.h"
+#include "translation/translation.h"
+#include "transcription-filter-data.h"
 #include "sherpa-tts/sherpa-tts.h"
 #include "tts-utils.h"
 
@@ -79,8 +81,18 @@ void hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *hotkey, bool pr
 			// Run Whisper STT
 			std::string transcribed_text;
 			try {
-				struct DetectionResultWithText result;
-				result = run_whisper_inference(gf->whisper_context, audio_copy);
+				// Create minimal transcription_filter_data for run_whisper_inference
+				struct transcription_filter_data whisper_gf = {};
+				whisper_gf.whisper_context = gf->whisper_context;
+				whisper_gf.log_level = LOG_INFO;
+				whisper_gf.sentence_psum_accept_thresh = 0.5f;
+				whisper_gf.duration_filter_threshold = 2.25f;
+				
+				struct DetectionResultWithText result = run_whisper_inference(
+					&whisper_gf,
+					audio_copy.data(),
+					audio_copy.size()
+				);
 				transcribed_text = result.text;
 				obs_log(LOG_INFO, "[Chaturlate] Transcribed: %s", transcribed_text.c_str());
 			} catch (const std::exception &e) {
@@ -95,10 +107,11 @@ void hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *hotkey, bool pr
 			
 			// Translate to English
 			std::string translated_text = transcribed_text;
-			if (gf->translation_enabled && gf->translator_pool) {
+			if (gf->translation_enabled && gf->translation_ctx.translator) {
 				try {
-					translated_text = translate(transcribed_text, gf->translator_pool,
-							gf->target_lang);
+					std::string source_lang = "auto"; // Auto-detect source language
+					translate(gf->translation_ctx, transcribed_text, source_lang, 
+						gf->target_lang, translated_text);
 					obs_log(LOG_INFO, "[Chaturlate] Translated: %s", translated_text.c_str());
 				} catch (const std::exception &e) {
 					obs_log(LOG_ERROR, "[Chaturlate] Translation error: %s", e.what());
@@ -160,10 +173,7 @@ void chaturlate_filter_destroy(void *data)
 	// Clean up TTS
 	destroy_sherpa_tts_context(gf->tts_context);
 	
-	// Clean up translator
-	if (gf->translator_pool) {
-		delete gf->translator_pool;
-	}
+	// Clean up translator (translation_ctx uses unique_ptr, auto-cleans)
 	
 	// Clean up resampler
 	if (gf->resampler) {
