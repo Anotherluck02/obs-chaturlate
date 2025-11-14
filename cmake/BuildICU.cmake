@@ -53,18 +53,11 @@ else()
   get_filename_component(ABS_C_COMPILER "${CMAKE_C_COMPILER}" ABSOLUTE)
   get_filename_component(ABS_CXX_COMPILER "${CMAKE_CXX_COMPILER}" ABSOLUTE)
   
-  # Add ccache detection at the start
-  find_program(CCACHE_PROGRAM ccache)
-  if(CCACHE_PROGRAM)
-    message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
-    # Create compiler wrapper commands with absolute paths
-    set(C_LAUNCHER "${CCACHE_PROGRAM} ${ABS_C_COMPILER}")
-    set(CXX_LAUNCHER "${CCACHE_PROGRAM} ${ABS_CXX_COMPILER}")
-  else()
-    # Use compiler directly if ccache not found
-    set(C_LAUNCHER "${ABS_C_COMPILER}")
-    set(CXX_LAUNCHER "${ABS_CXX_COMPILER}")
-  endif()
+  # For ICU builds, use compiler directly (don't use ccache)
+  # ICU's configure script can have issues with ccache wrappers
+  # Since ICU is a dependency, caching is less critical
+  set(C_LAUNCHER "${ABS_C_COMPILER}")
+  set(CXX_LAUNCHER "${ABS_CXX_COMPILER}")
 
   set(ICU_URL
       "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz"
@@ -88,12 +81,22 @@ else()
       set(TARGET_ARCH "-arch arm64")
       message(STATUS "Building ICU for arm64 (default for universal macOS builds)")
     endif()
-    # Quote compiler paths to handle spaces
-    set(ICU_BUILD_ENV_VARS CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH} "CC=${C_LAUNCHER}"
-                           "CXX=${CXX_LAUNCHER}")
+    # Set environment variables as a list for proper CMake handling
+    # CMake's -E env expects each variable as a separate list item
+    set(ICU_BUILD_ENV_VARS
+        "CFLAGS=${TARGET_ARCH}"
+        "CXXFLAGS=${TARGET_ARCH}"
+        "LDFLAGS=${TARGET_ARCH}"
+        "CC=${C_LAUNCHER}"
+        "CXX=${CXX_LAUNCHER}")
   else()
     set(ICU_PLATFORM "Linux")
-    set(ICU_BUILD_ENV_VARS CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC CC=${C_LAUNCHER} CXX=${CXX_LAUNCHER})
+    set(ICU_BUILD_ENV_VARS
+        "CFLAGS=-fPIC"
+        "CXXFLAGS=-fPIC"
+        "LDFLAGS=-fPIC"
+        "CC=${C_LAUNCHER}"
+        "CXX=${CXX_LAUNCHER}")
   endif()
 
   ExternalProject_Add(
