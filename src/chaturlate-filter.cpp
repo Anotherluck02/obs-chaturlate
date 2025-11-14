@@ -24,7 +24,7 @@ const char *chaturlate_filter_name(void *unused)
 	return "Chaturlate (Hold L: STT → Translation → TTS)";
 }
 
-void audio_samples_callback(void *data, const float *samples, int num_samples, int sample_rate)
+void chaturlate_audio_samples_callback(void *data, const float *samples, int num_samples, int sample_rate)
 {
 	UNUSED_PARAMETER(sample_rate);
 	chaturlate_filter_data *gf = (chaturlate_filter_data *)data;
@@ -292,7 +292,7 @@ void chaturlate_filter_update(void *data, obs_data_t *settings)
 		destroy_sherpa_tts_context(gf->tts_context);
 		gf->tts_context.model_name = new_tts_model;
 		gf->tts_context.callback_data = gf;
-		init_sherpa_tts_context(gf->tts_context, audio_samples_callback, gf);
+		init_sherpa_tts_context(gf->tts_context, chaturlate_audio_samples_callback, gf);
 	}
 	
 	gf->speaker_id = (uint32_t)obs_data_get_int(settings, "speaker_id");
