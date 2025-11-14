@@ -72,12 +72,21 @@ else()
   set(ICU_HASH "SHA256=dfacb46bfe4747410472ce3e1144bf28a102feeaa4e3875bac9b4c6cf30f4f3e")
   if(APPLE)
     set(ICU_PLATFORM "MacOSX")
-    # Detect architecture if MACOS_ARCH env var is not set
-    if(NOT DEFINED ENV{MACOS_ARCH} OR "$ENV{MACOS_ARCH}" STREQUAL "")
-      execute_process(COMMAND uname -m OUTPUT_VARIABLE MACOS_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-      set(TARGET_ARCH "-arch ${MACOS_ARCH}")
-    else()
+    # Determine target architecture for ICU build
+    # Priority: CMAKE_OSX_ARCHITECTURES > MACOS_ARCH env var > arm64 (default for universal builds)
+    if(CMAKE_OSX_ARCHITECTURES)
+      # If multiple architectures specified, build for the first one (usually arm64)
+      list(GET CMAKE_OSX_ARCHITECTURES 0 PRIMARY_ARCH)
+      set(TARGET_ARCH "-arch ${PRIMARY_ARCH}")
+      message(STATUS "Building ICU for architecture: ${PRIMARY_ARCH} (from CMAKE_OSX_ARCHITECTURES)")
+    elseif(DEFINED ENV{MACOS_ARCH} AND NOT "$ENV{MACOS_ARCH}" STREQUAL "")
       set(TARGET_ARCH "-arch $ENV{MACOS_ARCH}")
+      message(STATUS "Building ICU for architecture: $ENV{MACOS_ARCH} (from MACOS_ARCH env var)")
+    else()
+      # Default to arm64 for universal builds (required by the main build)
+      # This ensures ICU is available for arm64 even on Intel Mac runners
+      set(TARGET_ARCH "-arch arm64")
+      message(STATUS "Building ICU for arm64 (default for universal macOS builds)")
     endif()
     # Quote compiler paths to handle spaces
     set(ICU_BUILD_ENV_VARS CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH} "CC=${C_LAUNCHER}"
