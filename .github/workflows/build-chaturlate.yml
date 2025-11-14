@@ -76,23 +76,67 @@ jobs:
       
       - name: Check build output
         run: |
-          echo "Build directory contents:"
+          echo "=== Build directory contents ==="
           ls -lah build_macos/ || echo "build_macos not found"
+          echo ""
+          echo "=== Checking for plugin in build directory ==="
+          find build_macos -name "*.plugin" -type d 2>/dev/null || echo "No .plugin found in build_macos"
+          echo ""
+          echo "=== Checking install directory ==="
+          if [ -d "release/Release" ]; then
+            echo "Release directory found:"
+            ls -lah release/Release/
+            find release/Release -name "*.plugin" -type d 2>/dev/null || echo "No .plugin in release/Release"
+          fi
+          echo ""
+          echo "=== Checking Xcode build products ==="
+          if [ -d "build_macos/Release" ]; then
+            echo "Release build directory found:"
+            ls -lah build_macos/Release/
+            find build_macos/Release -name "*.plugin" -type d 2>/dev/null || echo "No .plugin in build_macos/Release"
+          fi
+          echo ""
+          echo "=== Checking for any .plugin files ==="
+          find . -name "*.plugin" -type d 2>/dev/null | head -10 || echo "No .plugin found anywhere"
+          echo ""
+          echo "=== Checking build log for errors ==="
+          if [ -f "build.log" ]; then
+            echo "Last 50 lines of build.log:"
+            tail -50 build.log
+            echo ""
+            echo "Checking for linker errors:"
+            grep -i "error\|undefined\|failed" build.log | tail -20 || echo "No obvious errors found"
+          fi
+          echo ""
+          # Check if plugin exists in expected location
           if [ -d "build_macos/obs-squawk.plugin" ]; then
-            echo "✅ Plugin built successfully!"
-            echo "Plugin size:"
+            echo "✅ Plugin found in build_macos/obs-squawk.plugin"
             du -sh build_macos/obs-squawk.plugin
-            echo "Plugin contents:"
-            ls -lR build_macos/obs-squawk.plugin/Contents/
+            ls -lR build_macos/obs-squawk.plugin/Contents/ | head -20
+          elif [ -d "release/Release/obs-squawk.plugin" ]; then
+            echo "✅ Plugin found in release/Release/obs-squawk.plugin"
+            du -sh release/Release/obs-squawk.plugin
+            ls -lR release/Release/obs-squawk.plugin/Contents/ | head -20
           else
-            echo "❌ Plugin not found!"
+            echo "❌ Plugin not found in expected locations!"
+            echo "Build may have failed during linking or install step."
             exit 1
           fi
       
       - name: Create plugin archive
         run: |
+          # Find the plugin location
+          if [ -d "build_macos/obs-squawk.plugin" ]; then
+            PLUGIN_PATH="build_macos/obs-squawk.plugin"
+          elif [ -d "release/Release/obs-squawk.plugin" ]; then
+            PLUGIN_PATH="release/Release/obs-squawk.plugin"
+          else
+            echo "❌ Plugin not found for archiving!"
+            exit 1
+          fi
+          
           cd build_macos
-          tar -czf obs-squawk-chaturlate-plugin.tar.gz obs-squawk.plugin
+          tar -czf obs-squawk-chaturlate-plugin.tar.gz -C .. "${PLUGIN_PATH#../}"
           echo "Archive created:"
           ls -lh obs-squawk-chaturlate-plugin.tar.gz
       
@@ -104,10 +148,32 @@ jobs:
           retention-days: 30
       
       - name: Upload raw plugin bundle
+        run: |
+          # Find the plugin location
+          if [ -d "build_macos/obs-squawk.plugin" ]; then
+            PLUGIN_PATH="build_macos/obs-squawk.plugin"
+          elif [ -d "release/Release/obs-squawk.plugin" ]; then
+            PLUGIN_PATH="release/Release/obs-squawk.plugin"
+          else
+            echo "❌ Plugin not found for upload!"
+            exit 1
+          fi
+          
+          # Create a temporary directory with the plugin
+          mkdir -p temp-upload
+          cp -R "${PLUGIN_PATH}" temp-upload/
+          
+          # Upload using actions/upload-artifact
+          echo "Plugin path: ${PLUGIN_PATH}"
+          echo "Uploading plugin bundle..."
+        continue-on-error: true
+      
+      - name: Upload raw plugin bundle (artifact)
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: obs-squawk-plugin-bundle
-          path: build_macos/obs-squawk.plugin/
+          path: temp-upload/obs-squawk.plugin/
           retention-days: 30
   
   build-info:
