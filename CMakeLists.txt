@@ -142,6 +142,7 @@ target_sources(
           # Cloud Translation
           src/translation/cloud-translation/translation-cloud.cpp
           src/translation/cloud-translation/curl-helper.cpp
+          src/translation/cloud-translation/aws.cpp
           src/translation/cloud-translation/azure.cpp
           src/translation/cloud-translation/claude.cpp
           src/translation/cloud-translation/custom-api.cpp
