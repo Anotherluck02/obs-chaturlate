@@ -1,4 +1,5 @@
 #include "model-downloader-types.h"
+#include "plugin-support.h"
 #include <map>
 #include <obs-module.h>
 
