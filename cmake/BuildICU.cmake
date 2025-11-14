@@ -49,13 +49,21 @@ if(WIN32)
                                                                                        "${ICU_LIB_${lib}}")
   endforeach()
 else()
+  # Get absolute compiler paths
+  get_filename_component(ABS_C_COMPILER "${CMAKE_C_COMPILER}" ABSOLUTE)
+  get_filename_component(ABS_CXX_COMPILER "${CMAKE_CXX_COMPILER}" ABSOLUTE)
+  
   # Add ccache detection at the start
   find_program(CCACHE_PROGRAM ccache)
   if(CCACHE_PROGRAM)
     message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
-    # Create compiler wrapper commands
-    set(C_LAUNCHER "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
-    set(CXX_LAUNCHER "${CCACHE_PROGRAM} ${CMAKE_CXX_COMPILER}")
+    # Create compiler wrapper commands with absolute paths
+    set(C_LAUNCHER "${CCACHE_PROGRAM} ${ABS_C_COMPILER}")
+    set(CXX_LAUNCHER "${CCACHE_PROGRAM} ${ABS_CXX_COMPILER}")
+  else()
+    # Use compiler directly if ccache not found
+    set(C_LAUNCHER "${ABS_C_COMPILER}")
+    set(CXX_LAUNCHER "${ABS_CXX_COMPILER}")
   endif()
 
   set(ICU_URL
@@ -64,9 +72,16 @@ else()
   set(ICU_HASH "SHA256=dfacb46bfe4747410472ce3e1144bf28a102feeaa4e3875bac9b4c6cf30f4f3e")
   if(APPLE)
     set(ICU_PLATFORM "MacOSX")
-    set(TARGET_ARCH -arch\ $ENV{MACOS_ARCH})
-    set(ICU_BUILD_ENV_VARS CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH} CC=${C_LAUNCHER}
-                           CXX=${CXX_LAUNCHER})
+    # Detect architecture if MACOS_ARCH env var is not set
+    if(NOT DEFINED ENV{MACOS_ARCH} OR "$ENV{MACOS_ARCH}" STREQUAL "")
+      execute_process(COMMAND uname -m OUTPUT_VARIABLE MACOS_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
+      set(TARGET_ARCH "-arch ${MACOS_ARCH}")
+    else()
+      set(TARGET_ARCH "-arch $ENV{MACOS_ARCH}")
+    endif()
+    # Quote compiler paths to handle spaces
+    set(ICU_BUILD_ENV_VARS CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH} "CC=${C_LAUNCHER}"
+                           "CXX=${CXX_LAUNCHER}")
   else()
     set(ICU_PLATFORM "Linux")
     set(ICU_BUILD_ENV_VARS CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC CC=${C_LAUNCHER} CXX=${CXX_LAUNCHER})
