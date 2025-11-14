@@ -2,6 +2,7 @@
 #define WHISPER_PROCESSING_H
 
 #include <whisper.h>
+#include "vad-processing.h"
 
 // buffer size in msec
 #define DEFAULT_BUFFER_SIZE_MSEC 3000
@@ -36,7 +37,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 						     const float *pcm32f_data_,
 						     size_t pcm32f_num_samples, uint64_t t0 = 0,
 						     uint64_t t1 = 0,
-						     int vad_state = 0);
+						     int vad_state = VAD_STATE_WAS_OFF);
 void run_inference_and_callbacks(transcription_filter_data *gf, uint64_t start_offset_ms,
 				 uint64_t end_offset_ms, int vad_state);
 

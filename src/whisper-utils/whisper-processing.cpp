@@ -139,9 +139,9 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in,
 
 struct DetectionResultWithText run_whisper_inference(struct transcription_filter_data *gf,
 						     const float *pcm32f_data_,
-						     size_t pcm32f_num_samples, uint64_t t0 = 0,
-						     uint64_t t1 = 0,
-						     int vad_state = VAD_STATE_WAS_OFF)
+						     size_t pcm32f_num_samples, uint64_t t0,
+						     uint64_t t1,
+						     int vad_state)
 {
 	if (gf == nullptr) {
 		obs_log(LOG_ERROR, "run_whisper_inference: gf is null");
