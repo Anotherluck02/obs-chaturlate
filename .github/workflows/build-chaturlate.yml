@@ -66,9 +66,21 @@ jobs:
       
       - name: Build plugin (after patch)
         run: |
-          ./.github/scripts/build-macos -c Release 2>&1 | tee build.log || {
-            echo "Build failed, checking for undefined symbols..."
-            grep -A 50 "Undefined symbols" build.log || echo "No undefined symbols found in output"
+          # Build with verbose output to capture linker errors
+          ./.github/scripts/build-macos -c Release -v 2>&1 | tee build.log || {
+            echo "=== Build failed, checking for errors ==="
+            echo ""
+            echo "=== Searching for undefined symbols ==="
+            grep -A 100 "Undefined symbols" build.log || echo "No 'Undefined symbols' found"
+            echo ""
+            echo "=== Searching for linker errors ==="
+            grep -i "ld:" build.log | tail -50 || echo "No 'ld:' errors found"
+            echo ""
+            echo "=== Searching for 'error:' ==="
+            grep -i "error:" build.log | tail -50 || echo "No 'error:' found"
+            echo ""
+            echo "=== Last 100 lines of build log ==="
+            tail -100 build.log
             exit 1
           }
         env:
